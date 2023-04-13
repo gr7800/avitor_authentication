@@ -48,6 +48,7 @@ exports.LoginController = async (req, res) => {
 exports.GetAllUser = async (req, res) => {
     // Extract email and password from request body
     let { token } = req.headers;
+    console.log(token);
     let decode = jwt.decode(token, process.env.JWT_SECRET);
     try {
         if (decode.email!="cto.aviatorcloud@gmail.com") {
@@ -56,6 +57,22 @@ exports.GetAllUser = async (req, res) => {
         const AllUser = await UserModel.find();
         
         return res.status(200).send({user:AllUser});
+    } catch (error) {
+        // If an error occurs, send a 500 Internal Server Error status code with the error message
+        return res.status(500).send(error.message);
+    }
+};
+
+exports.GetSingalUser = async (req, res) => {
+    // Extract email and password from request body
+    let { token } = req.headers;
+    let decode = jwt.decode(token, process.env.JWT_SECRET);
+    try {
+        const AllUser = await UserModel.findOne({email:decode.email});
+        if(!AllUser){
+            return res.status(401).send({message:"Please Login again"});  
+        }
+        return res.status(200).send({ token:token, userpersent:AllUser, message: 'Login successful' });
     } catch (error) {
         // If an error occurs, send a 500 Internal Server Error status code with the error message
         return res.status(500).send(error.message);
@@ -140,7 +157,7 @@ exports.ProfileUpdateController = async (req, res) => {
         // Find the user in the database by their ID
         let updateUser = await UserModel.findByIdAndUpdate({ _id: id },req.body);
         let newUser = await UserModel.findOne({_id:id});
-        return res.status(200).send({ status: true, messege: "user updated successfully",user:newUser });
+        return res.status(200).send({ status: true, message: "user updated successfully",user:newUser });
     } catch (error) {
         // If an error occurs, send a 500 Internal Server Error status code with the error message
         return res.status(500).send(error.message);
@@ -154,9 +171,9 @@ exports.deleteAuser = async (req, res) => {
     try {
         let user = await UserModel.findByIdAndDelete({ _id: id });
         let alluser = await UserModel.find();
-        return res.status(200).send({ status: true, messege: "user deleted successfully",user:alluser });
+        return res.status(200).send({ status: true, message: "user deleted successfully",user:alluser });
     } catch (error) {
         console.log(error);
-        return res.status(401).send({ status: false, messege: "something went wrong" });
+        return res.status(401).send({ status: false, message: "something went wrong" });
     }
 };
