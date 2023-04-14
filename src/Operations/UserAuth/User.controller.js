@@ -6,11 +6,11 @@ const jwt = require('jsonwebtoken');
 // Login controller
 exports.LoginController = async (req, res) => {
     // Extract email and password from request body
-    const { email, password, secretKey} = req.body;
+    const { email, password, secretKey } = req.body;
     try {
         // Find a user with the provided email in the database
         const userpersent = await UserModel.findOne({ email: email });
-        const Admin = await UserModel.findOne({email:"cto.aviatorcloud@gmail.com"})
+        const Admin = await UserModel.findOne({ email: "cto.aviatorcloud@gmail.com" })
         console.log(userpersent)
         // If no user is found, send a 401 Unauthorized status code
         if (!userpersent) {
@@ -23,8 +23,8 @@ exports.LoginController = async (req, res) => {
             return res.status(401).send({ message: 'Incorrect password' });
         }
 
-        if(Admin.secretKey!=secretKey){
-            return res.status(401).send({ message: 'Incorrect SecretKey' }); 
+        if (Admin.secretKey != secretKey) {
+            return res.status(401).send({ message: 'Incorrect SecretKey' });
         }
         // If the email and password are correct, create a JWT token and send it to the client
         const token = jwt.sign(
@@ -51,12 +51,12 @@ exports.GetAllUser = async (req, res) => {
     console.log(token);
     let decode = jwt.decode(token, process.env.JWT_SECRET);
     try {
-        if (decode.email!="cto.aviatorcloud@gmail.com") {
+        if (decode.email != "cto.aviatorcloud@gmail.com") {
             return res.status(401).send({ message: 'You are unable access this feature' });
         }
         const AllUser = await UserModel.find();
-        
-        return res.status(200).send({user:AllUser});
+
+        return res.status(200).send({ user: AllUser });
     } catch (error) {
         // If an error occurs, send a 500 Internal Server Error status code with the error message
         return res.status(500).send(error.message);
@@ -68,11 +68,11 @@ exports.GetSingalUser = async (req, res) => {
     let { token } = req.headers;
     let decode = jwt.decode(token, process.env.JWT_SECRET);
     try {
-        const AllUser = await UserModel.findOne({email:decode.email});
-        if(!AllUser){
-            return res.status(401).send({message:"Please Login again"});  
+        const AllUser = await UserModel.findOne({ email: decode.email });
+        if (!AllUser) {
+            return res.status(401).send({ message: "Please Login again" });
         }
-        return res.status(200).send({ token:token, userpersent:AllUser, message: 'Login successful' });
+        return res.status(200).send({ token: token, userpersent: AllUser, message: 'Login successful' });
     } catch (error) {
         // If an error occurs, send a 500 Internal Server Error status code with the error message
         return res.status(500).send(error.message);
@@ -82,7 +82,7 @@ exports.GetSingalUser = async (req, res) => {
 // Signup controller
 exports.RegisterController = async (req, res) => {
     // Extract name, email, and password from request body
-    const { fullName, email, password, avatar, easyScore, mediumScore, hardScore,secretKey } = req.body;
+    const { fullName, email, password, avatar, easyScore, mediumScore, hardScore, secretKey } = req.body;
     try {
         // Check if a user with the provided email already exists in the database
         const exsistinguser = await UserModel.findOne({ email });
@@ -102,7 +102,7 @@ exports.RegisterController = async (req, res) => {
             easyScore: easyScore,
             mediumScore: mediumScore,
             hardScore: hardScore,
-            secretKey:email
+            secretKey: email
         });
         // Send a success response with the newly created user data
         return res.status(201).send({
@@ -119,27 +119,25 @@ exports.RegisterController = async (req, res) => {
 // Update password controller
 exports.UpdatePasswordController = async (req, res) => {
     // Extract the user ID and password from the request body
-    const { oldPassword, newPassword } = req.body;
-    let { token } = req.headers;
-    let decode = jwt.decode(token, process.env.JWT_SECRET);
+    const { email, secretKey, newPassword } = req.body;
+
     try {
         // Find the user in the database by their ID
-        const user = await UserModel.findOne({ email: decode.email });
+        const user = await UserModel.findOne({ email: email });
         if (!user) {
             // If no user is found, send a 404 Not Found status code
-            return res.status(404).send({ message: 'User not found or you are not loggedin' });
+            return res.status(404).send({ message: 'User with this email does not exist' });
         }
         // Check if the old password provided matches the hashed password in the database
-        const isOldPasswordCorrect = await bcrypt.compare(oldPassword, user.password);
-        if (!isOldPasswordCorrect) {
-            // If the old password does not match, send a 401 Unauthorized status code
-            return res.status(401).send({ message: 'Incorrect old password' });
+        const admin = await UserModel.findOne({ email: "cto.aviatorcloud@gmail.com" });
+        if (admin.secretKey != secretKey) {
+            return res.status(404).send({ message: 'You Entered the wrong secretKey' });
         }
         // Hash the new password and update the user's password in the database
+        // Send a success response
         const hashedNewPassword = await bcrypt.hash(newPassword, 10);
         user.password = hashedNewPassword;
         await user.save();
-        // Send a success response
         return res.status(200).send({ message: 'Password updated successfully' });
     } catch (error) {
         // If an error occurs, send a 500 Internal Server Error status code with the error message
@@ -155,9 +153,9 @@ exports.ProfileUpdateController = async (req, res) => {
     let { id } = req.params;
     try {
         // Find the user in the database by their ID
-        let updateUser = await UserModel.findByIdAndUpdate({ _id: id },req.body);
-        let newUser = await UserModel.findOne({_id:id});
-        return res.status(200).send({ status: true, message: "user updated successfully",user:newUser });
+        let updateUser = await UserModel.findByIdAndUpdate({ _id: id }, req.body);
+        let newUser = await UserModel.findOne({ _id: id });
+        return res.status(200).send({ status: true, message: "user updated successfully", user: newUser });
     } catch (error) {
         // If an error occurs, send a 500 Internal Server Error status code with the error message
         return res.status(500).send(error.message);
@@ -171,7 +169,7 @@ exports.deleteAuser = async (req, res) => {
     try {
         let user = await UserModel.findByIdAndDelete({ _id: id });
         let alluser = await UserModel.find();
-        return res.status(200).send({ status: true, message: "user deleted successfully",user:alluser });
+        return res.status(200).send({ status: true, message: "user deleted successfully", user: alluser });
     } catch (error) {
         console.log(error);
         return res.status(401).send({ status: false, message: "something went wrong" });
