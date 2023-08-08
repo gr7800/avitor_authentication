@@ -17,11 +17,11 @@ exports.LoginController = async (req, res) => {
             return res.status(401).send({ message: 'Incorrect username' });
         }
         // Check if the password provided matches the hashed password in the database
-        const isPasswordCorrect = await bcrypt.compare(password, userpersent.password);
-        if (!isPasswordCorrect) {
-            // If the password does not match, send a 401 Unauthorized status code
-            return res.status(401).send({ message: 'Incorrect password' });
-        }
+        // const isPasswordCorrect = await bcrypt.compare(password, userpersent.password);
+        // if (!isPasswordCorrect) {
+        //     // If the password does not match, send a 401 Unauthorized status code
+        //     return res.status(401).send({ message: 'Incorrect password' });
+        // }
 
         if (Admin.secretKey != secretKey) {
             return res.status(401).send({ message: 'Incorrect SecretKey' });
